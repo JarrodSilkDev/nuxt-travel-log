@@ -1,29 +1,29 @@
-import { createAuthClient } from "better-auth/client";
+import { createAuthClient } from "better-auth/vue";
 
 const authClient = createAuthClient();
 
 export const useAuthStore = defineStore("useAuthStore", () => {
-  const isLoading = ref(false);
+  const session = authClient.useSession();
+  const user = computed(() => session.value.data?.user);
+  const isLoading = computed(() => session.value.isPending || session.value.isRefetching);
 
   async function signIn() {
-    isLoading.value = true;
-    try {
-      await authClient.signIn.social({
-        provider: "github",
-        callbackURL: "/dashboard",
-        errorCallbackURL: "/error",
-      });
-    }
-    catch (e) {
-      console.error("something went wrong", e);
-    }
-    finally {
-      isLoading.value = false;
-    }
+    await authClient.signIn.social({
+      provider: "github",
+      callbackURL: "/dashboard",
+      errorCallbackURL: "/error",
+    });
+  }
+
+  async function signOut() {
+    await authClient.signOut();
+    navigateTo("/");
   }
 
   return {
     signIn,
+    signOut,
     isLoading,
+    user,
   };
 });
